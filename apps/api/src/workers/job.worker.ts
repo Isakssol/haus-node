@@ -318,12 +318,20 @@ async function executeGeminiNode(
   const mime   = first.mimeType ?? "image/png";
   const buffer = Buffer.from(base64, "base64");
 
-  const { url } = await uploadFile(buffer, {
-    folder:      "outputs/images",
-    contentType: mime,
-  });
+  // Try to upload to S3/R2; fall back to a data URI in dev when MinIO isn't running
+  let imageUrl: string;
+  try {
+    const { url } = await uploadFile(buffer, {
+      folder:      "outputs/images",
+      contentType: mime,
+    });
+    imageUrl = url;
+  } catch (err) {
+    console.warn("[gemini] uploadFile failed, falling back to data URI:", (err as Error).message);
+    imageUrl = `data:${mime};base64,${base64}`;
+  }
 
-  return { image: url };
+  return { image: imageUrl };
 }
 
 // ── OpenAI ────────────────────────────────────────────────────────────────────
