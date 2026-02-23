@@ -4,6 +4,7 @@ import fastifyCors from "@fastify/cors";
 import fastifyWebsocket from "@fastify/websocket";
 import fastifyMultipart from "@fastify/multipart";
 import fastifyRateLimit from "@fastify/rate-limit";
+import { eq } from "drizzle-orm";
 
 import { workflowRoutes } from "./routes/workflows.js";
 import { jobRoutes } from "./routes/jobs.js";
@@ -11,7 +12,11 @@ import { nodeRoutes } from "./routes/nodes.js";
 import { workspaceRoutes } from "./routes/workspaces.js";
 import { wsRoutes } from "./routes/ws.js";
 import { uploadRoutes } from "./routes/uploads.js";
+import { authRoutes } from "./routes/auth.js";
+import { projectRoutes } from "./routes/projects.js";
 import { createJobWorker } from "./workers/job.worker.js";
+import { db } from "./lib/db.js";
+import { sessions, users } from "./lib/schema.js";
 
 const app = Fastify({
   logger: {
@@ -40,9 +45,30 @@ await app.register(fastifyRateLimit, {
   timeWindow: "1 minute",
 });
 
-// ─── Auth middleware (dev bypass) ─────────────────────────────────────────────
-// In production, replace with: await app.register(clerkPlugin)
+// ─── Auth middleware ───────────────────────────────────────────────────────────
+// Reads Bearer token from Authorization header and attaches user to req.auth.
+// Falls back to dev-user-001 in development when no token is provided.
+
 app.addHook("preHandler", async (req) => {
+  const token = req.headers.authorization?.replace("Bearer ", "");
+
+  // Auth routes don't need a session
+  if (req.url.startsWith("/api/v1/auth/")) return;
+
+  if (token) {
+    const [session] = await db
+      .select()
+      .from(sessions)
+      .where(eq(sessions.token, token))
+      .limit(1);
+
+    if (session && session.expiresAt > new Date()) {
+      (req as any).auth = { userId: session.userId, sessionToken: token };
+      return;
+    }
+  }
+
+  // Dev fallback — remove in production
   if (process.env.NODE_ENV !== "production") {
     (req as any).auth = { userId: "dev-user-001" };
   }
@@ -53,10 +79,12 @@ app.addHook("preHandler", async (req) => {
 await app.register(wsRoutes);
 
 await app.register(async (api) => {
+  await api.register(authRoutes);
   await api.register(workspaceRoutes);
   await api.register(workflowRoutes);
   await api.register(jobRoutes);
   await api.register(nodeRoutes);
+  await api.register(projectRoutes);
   await api.register(uploadRoutes, { prefix: "/uploads" });
 }, { prefix: "/api/v1" });
 

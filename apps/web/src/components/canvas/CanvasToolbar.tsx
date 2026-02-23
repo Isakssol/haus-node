@@ -1,18 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Play, Save, Trash2, ZoomIn, Loader2, Coins } from "lucide-react";
+import Link from "next/link";
+import { Play, Save, Trash2, Loader2, Coins, FolderOpen, ChevronLeft } from "lucide-react";
 import { useCanvasStore } from "@/stores/canvas.store";
+import { useAuthStore } from "@/stores/auth.store";
 import { api } from "@/lib/api";
 import { NODE_MAP } from "@haus-node/node-registry";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-// Default workspace ID (replace with real auth later)
-const WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
-
 export function CanvasToolbar() {
   const [saving, setSaving] = useState(false);
+  const { workspace } = useAuthStore();
   const {
     nodes,
     edges,
@@ -23,6 +23,9 @@ export function CanvasToolbar() {
     setJobRunning,
     clearCanvas,
   } = useCanvasStore();
+
+  // Use real workspace ID from auth; fall back to dev placeholder
+  const workspaceId = workspace?.id ?? "00000000-0000-0000-0000-000000000001";
 
   const estimatedCost = nodes.reduce((sum, n) => {
     const def = NODE_MAP.get(n.data.nodeDefId);
@@ -40,7 +43,7 @@ export function CanvasToolbar() {
         await api.workflows.update(workflowId, { name: workflowName, nodes, edges });
         toast.success("Workflow saved");
       } else {
-        const res = await api.workflows.create(WORKSPACE_ID, {
+        const res = await api.workflows.create(workspaceId, {
           name: workflowName,
           nodes,
           edges,
@@ -61,7 +64,7 @@ export function CanvasToolbar() {
       return;
     }
     try {
-      const res = await api.jobs.run(WORKSPACE_ID, {
+      const res = await api.jobs.run(workspaceId, {
         workflowId,
         nodes: nodes.map((n) => ({
           id: n.id,
@@ -81,12 +84,18 @@ export function CanvasToolbar() {
 
   return (
     <header className="flex h-12 items-center gap-3 border-b border-border bg-card px-4">
-      {/* Logo */}
-      <div className="flex items-center gap-2 mr-4">
-        <div className="h-6 w-6 rounded-md bg-primary/20 flex items-center justify-center">
-          <div className="h-3 w-3 rounded-full bg-primary" />
-        </div>
-        <span className="text-sm font-bold text-foreground">haus-node</span>
+      {/* Back + Logo */}
+      <div className="flex items-center gap-1 mr-2">
+        <Link href="/" className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
+          <ChevronLeft className="h-3.5 w-3.5" />
+          <div className="h-5 w-5 rounded bg-primary/20 flex items-center justify-center">
+            <div className="h-2.5 w-2.5 rounded-full bg-primary" />
+          </div>
+        </Link>
+        <Link href="/projects" className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
+          <FolderOpen className="h-3.5 w-3.5" />
+          Projects
+        </Link>
       </div>
 
       {/* Workflow name */}
@@ -99,12 +108,17 @@ export function CanvasToolbar() {
 
       <div className="flex-1" />
 
-      {/* Credit estimate */}
-      {nodes.length > 0 && (
+      {/* Credit balance */}
+      {workspace && (
         <div className="flex items-center gap-1 rounded-md bg-muted px-2.5 py-1 text-[11px] text-muted-foreground">
           <Coins className="h-3 w-3" />
-          {estimatedCost} credits
+          {workspace.credits} credits
         </div>
+      )}
+
+      {/* Estimated cost for this run */}
+      {nodes.length > 0 && estimatedCost > 0 && (
+        <span className="text-[11px] text-muted-foreground">~{estimatedCost} per run</span>
       )}
 
       {/* Node count */}
@@ -133,11 +147,7 @@ export function CanvasToolbar() {
           disabled={saving}
           className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs text-foreground hover:bg-accent transition-colors disabled:opacity-50"
         >
-          {saving ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Save className="h-3.5 w-3.5" />
-          )}
+          {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
           Save
         </button>
 
@@ -153,15 +163,9 @@ export function CanvasToolbar() {
           )}
         >
           {jobRunning ? (
-            <>
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              Running...
-            </>
+            <><Loader2 className="h-3.5 w-3.5 animate-spin" />Running...</>
           ) : (
-            <>
-              <Play className="h-3.5 w-3.5" />
-              Run
-            </>
+            <><Play className="h-3.5 w-3.5" />Run</>
           )}
         </button>
       </div>

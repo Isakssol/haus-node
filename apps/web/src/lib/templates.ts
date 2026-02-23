@@ -546,6 +546,290 @@ export const TEMPLATES: Template[] = [
     ],
   },
 
+  // ── 14. Brand Campaign Video ─────────────────────────────────────────────────
+  // Upload client logo → GPT-4o reads brand identity → generates on-brand hero
+  // image → animates into 3 social-format campaign videos.
+  {
+    id: "brand-campaign-video",
+    name: "Brand Campaign Video",
+    description: "Upload your client's logo → GPT-4o reads the brand identity → generates an on-brand hero image → animates into 3 social videos (16:9, 9:16, 1:1). One logo in, full campaign out.",
+    category: "Branding",
+    tags: ["brand", "campaign", "logo", "social video", "client", "kling"],
+    icon: "🎯",
+    previewGradient: "from-violet-600/20 to-pink-500/20",
+    estimatedCredits: 140,
+    nodes: [
+      // Brand asset input
+      n("logo-in",    "import",          "Upload Logo",         100, 360, { url: "" }),
+      n("brief-1",    "text-input",      "Campaign Brief",      100, 560, { value: "Summer launch campaign, energetic and modern, target audience 18-35" }),
+
+      // Vision reads the brand
+      n("vision-1",   "image-describer", "Read Brand Identity", 380, 360, { style: "prompt" }),
+      n("enh-1",      "prompt-enhancer", "Enhance for Brand",   660, 460, { style: "cinematic" }),
+
+      // Generate hero image in brand style
+      n("hero-1",     "flux-pro",        "Hero Image",          940, 460, { image_size: "landscape_16_9", num_inference_steps: 28, guidance_scale: 3.5, num_images: "1", seed: -1 }),
+      n("prev-hero",  "preview",         "Hero Preview",       1220, 260, {}),
+
+      // Animate into 3 formats
+      n("vid-wide",   "kling-2-5-i2v",   "16:9 Campaign",      1220, 460, { prompt: "Smooth cinematic camera move, brand logo reveal, energetic and modern", duration: "5", cfg_scale: 0.5 }),
+      n("vid-story",  "kling-2-5-i2v",   "9:16 Story",         1220, 660, { prompt: "Vertical mobile-native reveal, quick energetic motion, brand atmosphere", duration: "5", cfg_scale: 0.5 }),
+
+      // Exports
+      n("exp-wide",   "export",          "Export 16:9",        1520, 460, { filename: "campaign-16-9", format: "mp4" }),
+      n("exp-story",  "export",          "Export 9:16",        1520, 660, { filename: "campaign-9-16", format: "mp4" }),
+    ],
+    edges: [
+      e("e1",  "logo-in",  "vision-1",  "image", "image"),
+      e("e2",  "vision-1", "enh-1",     "text",  "text"),
+      e("e3",  "brief-1",  "enh-1",     "text",  "text"),
+      e("e4",  "enh-1",    "hero-1",    "text",  "prompt"),
+      e("e5",  "hero-1",   "prev-hero", "image", "media"),
+      e("e6",  "hero-1",   "vid-wide",  "image", "image"),
+      e("e7",  "hero-1",   "vid-story", "image", "image"),
+      e("e8",  "enh-1",    "vid-wide",  "text",  "prompt"),
+      e("e9",  "enh-1",    "vid-story", "text",  "prompt"),
+      e("e10", "vid-wide",  "exp-wide",  "video", "video"),
+      e("e11", "vid-story", "exp-story", "video", "video"),
+    ],
+  },
+
+  // ── 15. Brand Consistency Pack ───────────────────────────────────────────────
+  // Upload logo + write brand brief → generate logo on white, logo on dark,
+  // brand hero image, and social square, all in one run.
+  {
+    id: "brand-consistency-pack",
+    name: "Brand Consistency Pack",
+    description: "Upload client logo + brand brief → generate 4 consistent brand assets: logo on white, logo on dark background, lifestyle hero, and a social square. One click, four deliverables.",
+    category: "Branding",
+    tags: ["brand", "consistency", "logo", "assets", "multi-format", "client"],
+    icon: "🎨",
+    previewGradient: "from-indigo-600/20 to-violet-500/20",
+    estimatedCredits: 22,
+    nodes: [
+      n("logo-in",  "import",          "Upload Logo",         100, 280, { url: "" }),
+      n("brief-1",  "text-input",      "Brand Brief",         100, 480, { value: "Luxury wellness brand. Calm, premium, natural. Sage green and warm cream palette." }),
+      n("vision-1", "image-describer", "Read Logo",           380, 280, { style: "prompt" }),
+      n("enh-1",    "prompt-enhancer", "Brand Prompt",        660, 380, { style: "detailed" }),
+
+      // 4 outputs
+      n("white-1",  "ideogram-v3",     "Logo – White BG",     940, 100, { image_size: "square_hd", style: "DESIGN", rendering_speed: "BALANCED", seed: -1 }),
+      n("dark-1",   "ideogram-v3",     "Logo – Dark BG",      940, 300, { image_size: "square_hd", style: "DESIGN", rendering_speed: "BALANCED", seed: -1 }),
+      n("hero-1",   "flux-pro",        "Hero Image",          940, 500, { image_size: "landscape_16_9", num_inference_steps: 28, guidance_scale: 3.5, num_images: "1", seed: -1 }),
+      n("social-1", "recraft-v3",      "Social Square",       940, 700, { style: "realistic_image" }),
+
+      n("prev-1",   "preview",         "Logo White",         1240, 100, {}),
+      n("prev-2",   "preview",         "Logo Dark",          1240, 300, {}),
+      n("prev-3",   "preview",         "Hero",               1240, 500, {}),
+      n("prev-4",   "preview",         "Social",             1240, 700, {}),
+    ],
+    edges: [
+      e("e1",  "logo-in",  "vision-1", "image", "image"),
+      e("e2",  "vision-1", "enh-1",    "text",  "text"),
+      e("e3",  "brief-1",  "enh-1",    "text",  "text"),
+      e("e4",  "enh-1",    "white-1",  "text",  "prompt"),
+      e("e5",  "enh-1",    "dark-1",   "text",  "prompt"),
+      e("e6",  "enh-1",    "hero-1",   "text",  "prompt"),
+      e("e7",  "enh-1",    "social-1", "text",  "prompt"),
+      e("e8",  "white-1",  "prev-1",   "image", "media"),
+      e("e9",  "dark-1",   "prev-2",   "image", "media"),
+      e("e10", "hero-1",   "prev-3",   "image", "media"),
+      e("e11", "social-1", "prev-4",   "image", "media"),
+    ],
+  },
+
+  // ── 16. Reels / Shorts Generator ─────────────────────────────────────────────
+  // Brand brief + style reference → generate 3 vertical short-form video concepts.
+  {
+    id: "reels-shorts-generator",
+    name: "Reels & Shorts Generator",
+    description: "Write a brand brief and upload an optional reference image → generate 3 unique vertical (9:16) short-form video concepts with Kling, ready for Instagram Reels, TikTok and YouTube Shorts.",
+    category: "Branding",
+    tags: ["reels", "shorts", "tiktok", "instagram", "vertical", "brand", "social video"],
+    icon: "📲",
+    previewGradient: "from-rose-500/20 to-violet-600/20",
+    estimatedCredits: 130,
+    nodes: [
+      n("brief-1",  "text-input",      "Brand / Scene Brief",  100, 240, { value: "Sports performance brand. Fast, athletic, urban. 3 different energy moods: explosive, focused, triumphant." }),
+      n("ref-in",   "import",          "Style Reference (opt)",100, 460, { url: "" }),
+
+      n("enh-exp",  "prompt-enhancer", "→ Explosive",          400, 100, { style: "cinematic" }),
+      n("enh-foc",  "prompt-enhancer", "→ Focused",            400, 300, { style: "cinematic" }),
+      n("enh-tri",  "prompt-enhancer", "→ Triumphant",         400, 500, { style: "cinematic" }),
+
+      n("img-exp",  "flux-schnell",    "Frame: Explosive",     680, 100, { image_size: "portrait_16_9", num_inference_steps: 4, num_images: "1", seed: -1 }),
+      n("img-foc",  "flux-schnell",    "Frame: Focused",       680, 300, { image_size: "portrait_16_9", num_inference_steps: 4, num_images: "1", seed: -1 }),
+      n("img-tri",  "flux-schnell",    "Frame: Triumphant",    680, 500, { image_size: "portrait_16_9", num_inference_steps: 4, num_images: "1", seed: -1 }),
+
+      n("vid-exp",  "kling-2-5-i2v",   "Reel: Explosive",      980, 100, { prompt: "Fast explosive vertical camera motion, athlete in action, high energy, urban backdrop", duration: "5", cfg_scale: 0.7 }),
+      n("vid-foc",  "kling-2-5-i2v",   "Reel: Focused",        980, 300, { prompt: "Slow intense zoom-in on athlete, ultra focused expression, minimal movement, vertical format", duration: "5", cfg_scale: 0.4 }),
+      n("vid-tri",  "kling-2-5-i2v",   "Reel: Triumphant",     980, 500, { prompt: "Victory moment camera sweep, arms raised, crowd energy, cinematic confetti, golden light", duration: "5", cfg_scale: 0.5 }),
+
+      n("exp-1",    "export",          "Explosive.mp4",        1280, 100, { filename: "reel-explosive", format: "mp4" }),
+      n("exp-2",    "export",          "Focused.mp4",          1280, 300, { filename: "reel-focused", format: "mp4" }),
+      n("exp-3",    "export",          "Triumphant.mp4",       1280, 500, { filename: "reel-triumphant", format: "mp4" }),
+    ],
+    edges: [
+      e("e1",  "brief-1", "enh-exp",  "text",  "text"),
+      e("e2",  "brief-1", "enh-foc",  "text",  "text"),
+      e("e3",  "brief-1", "enh-tri",  "text",  "text"),
+      e("e4",  "enh-exp", "img-exp",  "text",  "prompt"),
+      e("e5",  "enh-foc", "img-foc",  "text",  "prompt"),
+      e("e6",  "enh-tri", "img-tri",  "text",  "prompt"),
+      e("e7",  "img-exp", "vid-exp",  "image", "image"),
+      e("e8",  "img-foc", "vid-foc",  "image", "image"),
+      e("e9",  "img-tri", "vid-tri",  "image", "image"),
+      e("e10", "enh-exp", "vid-exp",  "text",  "prompt"),
+      e("e11", "enh-foc", "vid-foc",  "text",  "prompt"),
+      e("e12", "enh-tri", "vid-tri",  "text",  "prompt"),
+      e("e13", "vid-exp", "exp-1",    "video", "video"),
+      e("e14", "vid-foc", "exp-2",    "video", "video"),
+      e("e15", "vid-tri", "exp-3",    "video", "video"),
+    ],
+  },
+
+  // ── 17. Brand Refresh Comparison ─────────────────────────────────────────────
+  // Upload old logo / existing brand visual → generate 3 fresh rebrand directions.
+  {
+    id: "brand-refresh-comparison",
+    name: "Brand Refresh Comparison",
+    description: "Upload an existing brand visual → GPT-4o reads the current identity → generates 3 distinct rebrand directions (modern minimal, bold expressive, premium luxury). Show clients options instantly.",
+    category: "Branding",
+    tags: ["rebrand", "brand refresh", "comparison", "agency", "client presentation"],
+    icon: "🔃",
+    previewGradient: "from-amber-500/20 to-orange-600/20",
+    estimatedCredits: 20,
+    nodes: [
+      n("brand-in",  "import",          "Current Brand Asset",   100, 300, { url: "" }),
+      n("brief-1",   "text-input",      "Rebrand Direction",     100, 500, { value: "The brand needs to feel younger, more digital-native, and globally premium." }),
+      n("vision-1",  "image-describer", "Read Current Brand",    380, 300, { style: "prompt" }),
+
+      n("enh-mod",   "prompt-enhancer", "→ Modern Minimal",      660, 120, { style: "minimal" }),
+      n("enh-bold",  "prompt-enhancer", "→ Bold Expressive",     660, 320, { style: "artistic" }),
+      n("enh-lux",   "prompt-enhancer", "→ Premium Luxury",      660, 520, { style: "detailed" }),
+
+      n("img-mod",   "ideogram-v3",     "Modern Minimal",        960, 120, { image_size: "square_hd", style: "DESIGN", rendering_speed: "BALANCED", seed: -1 }),
+      n("img-bold",  "ideogram-v3",     "Bold Expressive",       960, 320, { image_size: "square_hd", style: "DESIGN", rendering_speed: "BALANCED", seed: -1 }),
+      n("img-lux",   "ideogram-v3",     "Premium Luxury",        960, 520, { image_size: "square_hd", style: "DESIGN", rendering_speed: "BALANCED", seed: -1 }),
+
+      n("prev-mod",  "preview",         "Option A: Minimal",    1260, 120, {}),
+      n("prev-bold", "preview",         "Option B: Bold",       1260, 320, {}),
+      n("prev-lux",  "preview",         "Option C: Luxury",     1260, 520, {}),
+    ],
+    edges: [
+      e("e1",  "brand-in", "vision-1", "image", "image"),
+      e("e2",  "vision-1", "enh-mod",  "text",  "text"),
+      e("e3",  "vision-1", "enh-bold", "text",  "text"),
+      e("e4",  "vision-1", "enh-lux",  "text",  "text"),
+      e("e5",  "brief-1",  "enh-mod",  "text",  "text"),
+      e("e6",  "brief-1",  "enh-bold", "text",  "text"),
+      e("e7",  "brief-1",  "enh-lux",  "text",  "text"),
+      e("e8",  "enh-mod",  "img-mod",  "text",  "prompt"),
+      e("e9",  "enh-bold", "img-bold", "text",  "prompt"),
+      e("e10", "enh-lux",  "img-lux",  "text",  "prompt"),
+      e("e11", "img-mod",  "prev-mod", "image", "media"),
+      e("e12", "img-bold", "prev-bold","image", "media"),
+      e("e13", "img-lux",  "prev-lux", "image", "media"),
+    ],
+  },
+
+  // ── 18. Client Presentation Visuals ──────────────────────────────────────────
+  // Brand brief → 5 hero images for a pitch deck (title, problem, solution,
+  // vision, call-to-action). All landscape 16:9.
+  {
+    id: "client-presentation-visuals",
+    name: "Client Presentation Visuals",
+    description: "Describe a client brief → automatically generate 5 on-brand 16:9 hero images for each section of a pitch deck: Title, Challenge, Solution, Vision, and CTA. Instant presentation-ready visuals.",
+    category: "Branding",
+    tags: ["pitch deck", "presentation", "client", "hero images", "agency", "brand"],
+    icon: "📊",
+    previewGradient: "from-blue-600/20 to-indigo-500/20",
+    estimatedCredits: 25,
+    nodes: [
+      n("brief-1",  "text-input",      "Brand & Deck Brief",  100, 500, {
+        value: "Sustainable fintech startup. Clean, trustworthy, forward-looking. Green + navy palette. Audience: enterprise CFOs.",
+      }),
+      n("enh-title","prompt-enhancer", "→ Title Slide",       380,  80, { style: "cinematic" }),
+      n("enh-chal", "prompt-enhancer", "→ Challenge",         380, 240, { style: "cinematic" }),
+      n("enh-sol",  "prompt-enhancer", "→ Solution",          380, 400, { style: "cinematic" }),
+      n("enh-vis",  "prompt-enhancer", "→ Vision",            380, 560, { style: "cinematic" }),
+      n("enh-cta",  "prompt-enhancer", "→ CTA",               380, 720, { style: "cinematic" }),
+
+      n("img-title","flux-pro",        "Title Hero",          680,  80, { image_size: "landscape_16_9", num_inference_steps: 28, guidance_scale: 3.5, num_images: "1", seed: 42 }),
+      n("img-chal", "flux-pro",        "Challenge Hero",      680, 240, { image_size: "landscape_16_9", num_inference_steps: 28, guidance_scale: 3.5, num_images: "1", seed: 43 }),
+      n("img-sol",  "flux-pro",        "Solution Hero",       680, 400, { image_size: "landscape_16_9", num_inference_steps: 28, guidance_scale: 3.5, num_images: "1", seed: 44 }),
+      n("img-vis",  "flux-pro",        "Vision Hero",         680, 560, { image_size: "landscape_16_9", num_inference_steps: 28, guidance_scale: 3.5, num_images: "1", seed: 45 }),
+      n("img-cta",  "flux-pro",        "CTA Hero",            680, 720, { image_size: "landscape_16_9", num_inference_steps: 28, guidance_scale: 3.5, num_images: "1", seed: 46 }),
+
+      n("p-title",  "preview",         "1: Title",            980,  80, {}),
+      n("p-chal",   "preview",         "2: Challenge",        980, 240, {}),
+      n("p-sol",    "preview",         "3: Solution",         980, 400, {}),
+      n("p-vis",    "preview",         "4: Vision",           980, 560, {}),
+      n("p-cta",    "preview",         "5: CTA",              980, 720, {}),
+    ],
+    edges: [
+      e("e1",  "brief-1",   "enh-title", "text",  "text"),
+      e("e2",  "brief-1",   "enh-chal",  "text",  "text"),
+      e("e3",  "brief-1",   "enh-sol",   "text",  "text"),
+      e("e4",  "brief-1",   "enh-vis",   "text",  "text"),
+      e("e5",  "brief-1",   "enh-cta",   "text",  "text"),
+      e("e6",  "enh-title", "img-title", "text",  "prompt"),
+      e("e7",  "enh-chal",  "img-chal",  "text",  "prompt"),
+      e("e8",  "enh-sol",   "img-sol",   "text",  "prompt"),
+      e("e9",  "enh-vis",   "img-vis",   "text",  "prompt"),
+      e("e10", "enh-cta",   "img-cta",   "text",  "prompt"),
+      e("e11", "img-title", "p-title",   "image", "media"),
+      e("e12", "img-chal",  "p-chal",    "image", "media"),
+      e("e13", "img-sol",   "p-sol",     "image", "media"),
+      e("e14", "img-vis",   "p-vis",     "image", "media"),
+      e("e15", "img-cta",   "p-cta",     "image", "media"),
+    ],
+  },
+
+  // ── 19. Brand Asset → Social Video ───────────────────────────────────────────
+  // Upload any brand asset (image, guideline screenshot, moodboard) →
+  // GPT-4o Vision extracts the aesthetic → image-to-image generates a
+  // campaign still in that exact style → Kling animates it into a video.
+  {
+    id: "brand-asset-to-social-video",
+    name: "Brand Asset → Social Video",
+    description: "Upload any existing brand asset — logo, moodboard, or guidelines screenshot → GPT-4o extracts the visual DNA → generates a campaign still in that exact style → animates into a polished social video.",
+    category: "Branding",
+    tags: ["brand", "moodboard", "social video", "style transfer", "campaign", "agency"],
+    icon: "✨",
+    previewGradient: "from-emerald-500/20 to-cyan-600/20",
+    estimatedCredits: 55,
+    nodes: [
+      n("asset-in",  "import",          "Upload Brand Asset",   100, 300, { url: "" }),
+      n("brief-1",   "text-input",      "Campaign Brief",       100, 500, { value: "Generate a campaign visual that captures the brand's core values and visual identity, suitable for social media." }),
+      n("vision-1",  "image-describer", "Extract Visual DNA",   380, 300, { style: "prompt" }),
+      n("enh-1",     "prompt-enhancer", "Craft Campaign Brief", 660, 400, { style: "cinematic" }),
+      n("i2i-1",     "image-to-image",  "Stylise Campaign Still",940, 300, {
+        prompt: "Campaign still in brand style, professional photography, high production value",
+        strength: 0.6, num_inference_steps: 28, guidance_scale: 3.5, seed: -1,
+      }),
+      n("prev-1",    "preview",         "Campaign Still",      1240, 160, {}),
+      n("up-1",      "image-upscaler",  "2× Upscale",          1240, 380, { scale: "2" }),
+      n("vid-1",     "kling-2-5-i2v",   "Animate",             1520, 380, {
+        prompt: "Smooth cinematic reveal, brand atmosphere, subtle motion, professional production",
+        duration: "5", cfg_scale: 0.45,
+      }),
+      n("exp-1",     "export",          "Export Campaign Video",1820, 380, { filename: "brand-social-video", format: "mp4" }),
+    ],
+    edges: [
+      e("e1",  "asset-in",  "vision-1",  "image", "image"),
+      e("e2",  "asset-in",  "i2i-1",     "image", "image"),
+      e("e3",  "vision-1",  "enh-1",     "text",  "text"),
+      e("e4",  "brief-1",   "enh-1",     "text",  "text"),
+      e("e5",  "enh-1",     "i2i-1",     "text",  "prompt"),
+      e("e6",  "i2i-1",     "prev-1",    "image", "media"),
+      e("e7",  "i2i-1",     "up-1",      "image", "image"),
+      e("e8",  "up-1",      "vid-1",     "image", "image"),
+      e("e9",  "enh-1",     "vid-1",     "text",  "prompt"),
+      e("e10", "vid-1",     "exp-1",     "video", "video"),
+    ],
+  },
+
 ];
 
 // ── Category list (for filtering) ────────────────────────────────────────────
